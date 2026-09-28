@@ -1,7 +1,12 @@
 import json
+import re
+import sys
 import requests
 import random
 from config import GEMINI_API_KEY
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 TOPIC_IDEAS = [
     "حقائق مذهلة وغريبة عن الفضاء والكون لم تسمع بها من قبل",
@@ -32,9 +37,16 @@ SYSTEM_PROMPT = """أنت صانع محتوى محترف وخبير في كتا�
 
 ملاحظات هامة جداً:
 - `search_query` يجب أن تكون باللغة الإنجليزية دائماً ومحددة وتصلح للبحث في مكتبات الفيديو مثل Pexels.
-- قسّم النص إلى 3 إلى 5 مشاهد على الأكثر.
+- قسّم النص إلى 3 إلى 4 مشاهد على الأكثر.
 - تجنب تماماً المقدمات الطويلة مثل "أهلاً بكم في فيديو اليوم". ابدأ مباشرة بالمعلومة الصادمة.
 """
+
+MODELS_LIST = [
+    "gemini-3.1-flash-lite",
+    "gemini-3.5-flash-lite",
+    "gemini-flash-latest",
+    "gemini-3.8-flash"
+]
 
 def generate_script(topic: str = None) -> dict:
     """Generates an engaging shorts script with visual search queries using Gemini Flash."""
@@ -44,7 +56,6 @@ def generate_script(topic: str = None) -> dict:
     if not topic:
         topic = random.choice(TOPIC_IDEAS)
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
     headers = {"Content-Type": "application/json"}
     payload = {
         "contents": [
@@ -55,27 +66,45 @@ def generate_script(topic: str = None) -> dict:
             }
         ],
         "generationConfig": {
-            "temperature": 0.8,
+            "temperature": 0.7,
             "responseMimeType": "application/json"
         }
     }
 
-    response = requests.post(url, headers=headers, json=payload, timeout=60)
-    response.raise_for_status()
-    
-    result = response.json()
-    content_text = result["candidates"][0]["content"]["parts"][0]["text"]
-    
-    data = json.loads(content_text)
-    return data
+    last_error = None
+    for model in MODELS_LIST:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=60)
+            if response.status_code == 200:
+                result = response.json()
+                candidates = result.get("candidates", [])
+                if not candidates:
+                    raise ValueError("No candidates returned from Gemini API")
+                
+                parts = candidates[0].get("content", {}).get("parts", [])
+                text_parts = [p.get("text", "") for p in parts if not p.get("thought", False)]
+                content_text = "".join(text_parts).strip()
+
+                if content_text.startswith("```"):
+                    content_text = re.sub(r"^```(?:json)?\s*", "", content_text)
+                    content_text = re.sub(r"\s*```$", "", content_text)
+
+                return json.loads(content_text)
+            else:
+                last_error = f"{model} returned {response.status_code}: {response.text}"
+        except Exception as e:
+            last_error = f"{model} processing error: {e}"
+            continue
+
+    raise RuntimeError(f"All Gemini models failed. Last error: {last_error}")
 
 if __name__ == "__main__":
-    import sys
     print("Testing Brain script generator...")
     try:
         data = generate_script()
         print(f"\nTitle: {data['title']}")
-        print(f"\nScript: {data['full_script']}")
+        print(f"\nTopic: {data.get('topic')}")
         print(f"\nScenes ({len(data['scenes'])}):")
         for i, scene in enumerate(data['scenes'], 1):
             print(f" {i}. [{scene['search_query']}] -> {scene['narration']}")

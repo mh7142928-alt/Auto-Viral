@@ -1,0 +1,24 @@
+{
+  "fruits": {
+    "series_id": "fruits_season_1",
+    "series_title": "مغامرة بيري: الفراولة الصغيرة والمدينة السحرية",
+    "universe_type": "fruits",
+    "current_episode": 2,
+    "total_episodes": 32,
+    "protagonist": "Berry the tiny sweet strawberry with big emotional eyes, woolen gloves and a backpack",
+    "character_prompt": "Adorable cute 3D Pixar animated anthropomorphic little strawberry named Berry, big expressive emotional teary brown eyes, wearing tiny brown boots, tiny wool mittens, small backpack, highly detailed 3D Disney Pixar render, 9:16 vertical ratio",
+    "overall_plot": "بيري فراولة صغيرة تعيش في مدينة الفواكه الخيالية، تبحث عن بذور شجرة الحياة لإنقاذ متجر الفواكه القديم من الإغلاق. تواجه ألغازاً ومخاطر وأشراراً من الخضار الجافة، وتتعلم معنى الشجاعة.",
+    "previous_summary": "تبدأ القصة في ليلة ممطرة وباردة حين يقف بيري وحيداً في شارع مدينة الفواكه، محاولاً حماية المتجر المتداعي. بيري يكتشف بذور شجرة الحياة وسط عاصفة ممطرة أمام متجره المتهالك، لكنه يكتشف وجود عدو غامض يراقبه في الظلام."
+  },
+  "animals": {
+    "series_id": "animals_season_1",
+    "series_title": "رحلة ميلو: القط الصغير والمخبز السري",
+    "universe_type": "animals",
+    "current_episode": 1,
+    "total_episodes": 30,
+    "protagonist": "Milo the tiny cute fluffy ginger kitten wearing an apron and baker hat",
+    "character_prompt": "Adorable cute 3D Pixar animated anthropomorphic fluffy baby ginger kitten named Milo, big cute glistening green eyes, wearing a tiny flour-dusted chef apron and little baker hat, standing in a cozy old bakery, warm cinematic lighting, ultra-detailed 8k, Disney Pixar style, 9:16 vertical ratio",
+    "overall_plot": "ميلو قط صغير مشرد وجد ملجأه في مخبز مهجور لجد عجوز، ويحاول إحياء وصفة الخبز الذهبي السحرية ليجمع حيوانات القرية ويمنع هدم الحي القديم.",
+    "previous_summary": "تبدأ القصة عندما يهرب ميلو الصغير من الرياح العاصفة ليلجأ إلى نافذة مخبز قديم دافئ مغلق منذ سنين."
+  }
+}

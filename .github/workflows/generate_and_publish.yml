@@ -1,13 +1,25 @@
-name: Automated Daily Shorts Generator
+name: Automated Daily Story Series (Fruits & Animals)
 
 on:
   schedule:
-    # Runs twice daily (e.g. 11:30 UTC and 17:30 UTC)
-    - cron: '30 11,17 * * *'
-  workflow_dispatch: # Allows manual trigger from GitHub UI anytime
+    # Trigger 1: 11:30 AM UTC (~2:30 PM KSA) -> Fruits Series Episode
+    - cron: '30 11 * * *'
+    # Trigger 2: 05:30 PM UTC (~8:30 PM KSA) -> Animals Series Episode
+    - cron: '30 17 * * *'
+  workflow_dispatch:
+    inputs:
+      series:
+        description: 'Choose series to produce'
+        required: true
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - fruits
+          - animals
 
 jobs:
-  build-and-run:
+  produce-episode:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,7 +32,7 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install FFmpeg
+      - name: Install FFmpeg & Fonts
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg fonts-noto-core fonts-noto-cjk
@@ -30,17 +42,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Generate Short Video
+      - name: Run Series Generation Pipeline
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
-          VOICE_NAME: ${{ vars.VOICE_NAME || 'ar-SA-HamedNeural' }}
         run: |
-          python main.py
+          TARGET_SERIES="${{ github.event.inputs.series || 'auto' }}"
+          echo "Executing generation for series: $TARGET_SERIES"
+          python main.py --series "$TARGET_SERIES"
 
-      - name: Upload Video Artifact (Backup)
+      - name: Commit Updated Series State & Metadata
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add series_state.json output/*.json
+          git commit -m "Auto-update: Advanced series state [skip ci]" || echo "No state changes to commit"
+          git push || echo "Push skipped"
+
+      - name: Archive Generated Episode Video
         uses: actions/upload-artifact@v4
         with:
-          name: generated-shorts-${{ github.run_id }}
-          path: output/
-          retention-days: 7
+          name: daily-episode-${{ github.run_id }}
+          path: output/*.mp4
+          retention-days: 14

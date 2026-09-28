@@ -1,74 +1,118 @@
+import os
 import sys
 import json
+import argparse
 from datetime import datetime
 from pathlib import Path
 
-from brain import generate_script
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
+from series_manager import load_state, advance_episode
+from story_brain import generate_episode_script
 from tts import generate_scene_audios
 from subtitles import build_scene_subtitles
-from pexels import fetch_scene_videos
+from image_generator import generate_scenes_images
 from video_assembler import assemble_scenes
 from config import OUTPUT_DIR, TEMP_DIR
 
-def run_pipeline(custom_topic: str = None) -> dict:
-    """Executes the complete video creation pipeline."""
+def run_series_pipeline(series_key: str) -> dict:
+    """Executes the full pipeline for an episodic series (fruits or animals)."""
+    state = load_state()
+    if series_key not in state:
+        raise ValueError(f"Unknown series key: {series_key}. Must be 'fruits' or 'animals'.")
+
+    series_info = state[series_key]
+    current_ep = series_info["current_episode"]
+    total_eps = series_info["total_episodes"]
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    print("=" * 60)
-    print(f"🎬 Starting Automated Video Generation Pipeline [{timestamp}]")
-    print("=" * 60)
+    session_id = f"{series_key}_ep{current_ep}_{timestamp}"
 
-    # 1. Brain & Script Generation
-    print("\n🧠 Step 1: Generating Script with Gemini Flash...")
-    script_data = generate_script(topic=custom_topic)
-    print(f"📌 Title: {script_data['title']}")
-    print(f"📝 Topic: {script_data.get('topic', 'General')}")
-    print(f"📜 Scenes to produce: {len(script_data['scenes'])}")
+    print("=" * 65)
+    print(f"🎬 Producing: {series_info['series_title']}")
+    print(f"📺 Episode: {current_ep} of {total_eps} | Universe: {series_key.upper()}")
+    print("=" * 65)
 
-    # 2. Voiceover per Scene
-    print("\n🎙️ Step 2: Generating Natural Voiceover per scene...")
-    scene_audios = generate_scene_audios(script_data["scenes"], session_id=timestamp)
+    # 1. Script Generation
+    print("\n🧠 Step 1: Writing dramatic episode script with Gemini...")
+    episode_data = generate_episode_script(series_info)
+    print(f"📌 Episode Title: {episode_data['episode_title']}")
+    print(f"📜 Scenes to animate: {len(episode_data['scenes'])}")
+
+    # 2. Voiceover Generation
+    print("\n🎙️ Step 2: Generating storytelling voiceover per scene (Edge-TTS)...")
+    scene_audios = generate_scene_audios(episode_data["scenes"], session_id=session_id)
     total_duration = sum(item["duration"] for item in scene_audios)
-    print(f"⏱️ Total Video Duration: {total_duration:.1f} seconds")
+    print(f"⏱️ Episode Duration: {total_duration:.1f} seconds")
 
-    # 3. Synchronized Subtitles
-    print("\n🎨 Step 3: Formatting & Synchronizing Subtitles...")
-    ass_path = str(TEMP_DIR / f"subtitles_{timestamp}.ass")
+    # 3. Subtitles Generation
+    print("\n🎨 Step 3: Generating synchronized dramatic subtitles (ASS)...")
+    ass_path = str(TEMP_DIR / f"{session_id}_subtitles.ass")
     build_scene_subtitles(scene_audios, ass_path)
-    print(f"✅ Subtitles generated: {ass_path}")
 
-    # 4. Fetching B-Roll from Pexels
-    print("\n🎥 Step 4: Fetching Vertical HD Video Clips from Pexels...")
-    scene_clips = fetch_scene_videos(script_data["scenes"])
-    print(f"✅ Downloaded {len(scene_clips)} clips.")
+    # 4. Generate 3D Character Scene Images
+    print("\n🖼️ Step 4: Generating consistent 3D character images...")
+    media_files = generate_scenes_images(
+        episode_data["scenes"],
+        session_prefix=session_id,
+        fixed_seed=42 + current_ep * 11
+    )
 
-    # 5. Video Assembly & Subtitle Burn
-    print("\n🎞️ Step 5: Assembling Video and Burning Captions with FFmpeg...")
-    final_filename = f"short_{timestamp}.mp4"
+    # 5. Video Assembly & Motion Render
+    print("\n🎞️ Step 5: Assembling video with Ken Burns motion & burning subtitles...")
+    final_filename = f"{series_key}_ep_{current_ep:02d}_{timestamp}.mp4"
     final_video_path = assemble_scenes(
-        scene_clips=scene_clips,
+        scene_media_files=media_files,
         scene_audios=scene_audios,
         subtitles_path=ass_path,
         output_filename=final_filename
     )
 
-    # Save metadata JSON for social media posting
-    metadata_path = OUTPUT_DIR / f"metadata_{timestamp}.json"
+    # Save metadata for posting
+    metadata_path = OUTPUT_DIR / f"{series_key}_ep_{current_ep:02d}_{timestamp}_metadata.json"
     with open(metadata_path, "w", encoding="utf-8") as f:
-        json.dump(script_data, f, ensure_ascii=False, indent=2)
+        json.dump({
+            "series_key": series_key,
+            "series_title": series_info["series_title"],
+            "episode_number": current_ep,
+            "total_episodes": total_eps,
+            "episode_title": episode_data["episode_title"],
+            "caption": episode_data["caption"],
+            "video_file": final_filename,
+            "created_at": datetime.now().isoformat()
+        }, f, ensure_ascii=False, indent=2)
 
-    print("\n" + "=" * 60)
-    print(f"🎉 Short Video Successfully Generated!")
-    print(f"📁 Video File: {final_video_path}")
+    # Advance episode memory in state
+    summary = episode_data.get("episode_summary_for_memory", episode_data["episode_title"])
+    advance_episode(series_key, summary)
+
+    print("\n" + "=" * 65)
+    print(f"🎉 Episode {current_ep} Successfully Created!")
+    print(f"📁 Video Path: {final_video_path}")
     print(f"📄 Metadata: {metadata_path}")
-    print("=" * 60)
+    print("=" * 65)
 
     return {
         "video_path": final_video_path,
         "metadata_path": str(metadata_path),
-        "title": script_data["title"],
-        "caption": script_data["caption"]
+        "title": episode_data["episode_title"],
+        "caption": episode_data["caption"]
     }
 
+def main():
+    parser = argparse.ArgumentParser(description="Automated Shorts & Series Generator")
+    parser.add_argument("--series", choices=["fruits", "animals", "auto"], default="auto",
+                        help="Choose which dramatic series to advance (fruits or animals)")
+    args = parser.parse_args()
+
+    series_to_run = args.series
+    if series_to_run == "auto":
+        # If morning/afternoon (hour < 16), run fruits; if evening/night, run animals
+        current_hour = datetime.now().hour
+        series_to_run = "fruits" if current_hour < 16 else "animals"
+        print(f"⏰ Auto-schedule detected: Running '{series_to_run}' series for current hour ({current_hour}:00).")
+
+    run_series_pipeline(series_to_run)
+
 if __name__ == "__main__":
-    topic = sys.argv[1] if len(sys.argv) > 1 else None
-    run_pipeline(custom_topic=topic)
+    main()
