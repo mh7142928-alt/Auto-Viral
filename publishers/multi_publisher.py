@@ -1,7 +1,11 @@
 import os
+import sys
 import json
 from datetime import datetime
 from pathlib import Path
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 from .youtube_uploader import upload_to_youtube_shorts
 from .instagram_uploader import upload_to_instagram_reels
