@@ -13,10 +13,11 @@ from tts import generate_scene_audios
 from subtitles import build_scene_subtitles
 from pexels import fetch_scene_videos
 from video_assembler import assemble_scenes
+from publishers.multi_publisher import publish_to_all_platforms
 from config import OUTPUT_DIR, TEMP_DIR
 
-def run_creative_pipeline(custom_topic: str = None) -> dict:
-    """Generates a complete, 100% free, automated, full-motion viral video."""
+def run_creative_pipeline(custom_topic: str = None, auto_publish: bool = True) -> dict:
+    """Generates a complete, 100% free, automated, full-motion viral video and publishes it."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     session_id = f"viral_{timestamp}"
 
@@ -75,13 +76,30 @@ def run_creative_pipeline(custom_topic: str = None) -> dict:
     print(f"📄 بيانات النشر: {metadata_path}")
     print("=" * 65)
 
+    # 7. Automated Multi-Platform Publishing
+    publishing_results = None
+    if auto_publish:
+        publishing_results = publish_to_all_platforms(
+            video_path=final_video,
+            title=script_data["title"],
+            caption=script_data["caption"]
+        )
+
     return {
         "video_path": final_video,
         "metadata_path": str(metadata_path),
         "title": script_data["title"],
-        "caption": script_data["caption"]
+        "caption": script_data["caption"],
+        "publishing": publishing_results
     }
 
+def main():
+    parser = argparse.ArgumentParser(description="Automated Full-Motion Real Shorts Generator with Auto-Publish")
+    parser.add_argument("topic", nargs="?", default=None, help="Custom topic to produce video on (optional)")
+    parser.add_argument("--no-publish", action="store_true", help="Skip publishing to platforms")
+    args = parser.parse_args()
+
+    run_creative_pipeline(custom_topic=args.topic, auto_publish=not args.no_publish)
+
 if __name__ == "__main__":
-    topic_arg = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("-") else None
-    run_creative_pipeline(custom_topic=topic_arg)
+    main()
