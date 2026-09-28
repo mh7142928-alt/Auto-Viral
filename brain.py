@@ -8,37 +8,40 @@ from config import GEMINI_API_KEY
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-TOPIC_IDEAS = [
-    "حقائق مذهلة وغريبة عن الفضاء والكون لم تسمع بها من قبل",
-    "أسرار تاريخية غامضة لم يجد لها العلماء تفسيراً حتى اليوم",
-    "عادات يومية بسيطة تميز الأشخاص الناجحين والأذكياء",
-    "معلومات صادمة عن أعماق المحيطات والمخلوقات التي تعيش هناك",
-    "حقائق نفسية مدهشة تفسر تصرفات البشر وطريقة تفكيرهم",
-    "اكتشافات علمية وتكنولوجية ستغير شكل المستقبل قريباً",
-    "أغرب الظواهر الطبيعية النادرة حول العالم"
+CONTENT_PILLARS = [
+    "حقائق نفسية مدهشة وسلوكيات بشرية غامضة تفسر مشاعرنا وتصرفاتنا اليومية",
+    "أغرب الصدف التاريخية الموثقة التي غيرت مجرى العالم بأسره بالصدفة البحتة",
+    "أماكن ساحرة وغامضة على كوكب الأرض ستظن من شدة جمالها أنها من عالم آخر",
+    "عجائب الطبيعة وظواهر حقيقية نادرة ومرعبة لا يجد لها العلم تفسيراً",
+    "عادات يومية بسيطة تميز أذكى وأنجح 1% من البشر وأسرار تفكيرهم",
+    "اختراعات وتطورات تكنولوجية خيالية ستغير شكل حياة البشر في السنوات القادمة",
+    "أسرار مذهلة عن قدرات العقل البشري وقوة الإدراك التي لا نستخدمها",
+    "أعماق البحار والمخلوقات النادرة التي تعيش في أشد بقاع الكوكب عزلة"
 ]
 
-SYSTEM_PROMPT = """أنت صانع محتوى محترف وخبير في كتابة نصوص فيديوهات قصيرة وسريعة الانتشار (Viral Shorts/Reels/TikTok).
-مهمتك كتابة محتوى لفيديو مدته حوالي 30 ثانية باللغة العربية الفصحى السلسة والمشوقة.
+CREATIVE_PROMPT = """أنت صانع محتوى فيروسي عبقري (Top Viral Creator) على TikTok وInstagram Reels وYouTube Shorts.
+مهمتك ابتكار فكرة جديدة كلياً وممتعة ومبهرة بناءً على هذا المحور: "{pillar}".
 
-يجب أن ترجع النتيجة بصيغة JSON حصراً بدون أي نصوص خارج الـ JSON بالبنية التالية:
-{
-  "topic": "موضوع الفيديو باختصار",
-  "title": "عنوان جذاب جداً مع إيموجي",
-  "caption": "وصف قصير للنشر مع 5 إلى 7 هاشتاجات شائعة",
-  "full_script": "النص الكامل المقروء بالصوت متصل بدون أسماء المشاهد، يبدأ بخطاف صادم يشعل الفضول في أول ثانيتين، ثم 3 حقائق سريعة ومثيرة، ثم خاتمة سريعة تحث على المتابعة",
+شروط كتابة السيناريو:
+1. الخطاف (Hook): ابدأ أول ثانيتين بسؤال صادم أو معلومة تثير الدهشة فوراً (تجنب المقدمات مثل: أهلاً بكم أو مرحباً).
+2. المحتوى: 3 إلى 4 معلومات أو نقاط سريعة، ممتعة، ومكتوبة بلغة عربية فصيحة سلسة وجذابة للغاية ومريحة للأذن.
+3. الخاتمة: قفلة ذكية تفتح نقاشاً وتدعو للتفاعل والتعليق ومتابعة الحساب.
+4. مدة النص: يتراوح بين 25 إلى 35 ثانية عند القراءة.
+5. المشاهد البصرية: قسّم الفيديو إلى 3 أو 4 مشاهد، ولكل مشهد اكتب `search_query` باللغة الإنجليزية حصراً يكون دقيقاً ومصمماً للبحث عن لقطات فيديو سينمائية عمودية حقيقية عالية الجودة (HD/4K) على موقع Pexels (مثال: drone aerial tropical waterfall, mysterious ancient library interior, deep ocean bioluminescence macro, calm person working cozy coffee shop).
+
+يجب إرجاع النتيجة بصيغة JSON حصراً بالهيكل التالي:
+{{
+  "topic": "عنوان الفكرة المبتكرة باختصار",
+  "title": "عنوان مثير وجذاب جداً مع إيموجي",
+  "caption": "وصف جذاب للمنشور مع حث المشاهدين على إبداء رأيهم و5 إلى 7 هاشتاجات شائعة",
+  "full_script": "النص الكامل المتصل باللغة العربية",
   "scenes": [
-    {
-      "narration": "الجملة المقروءة في هذا المشهد",
-      "search_query": "English keywords to search for vertical stock videos on Pexels (e.g. galaxy space stars 4k, mysterious dark ocean, ancient ruins cinematic)"
-    }
+    {{
+      "narration": "الجملة المقروءة لهذا المشهد باللغة العربية",
+      "search_query": "Cinematic HD English video search query for Pexels"
+    }}
   ]
-}
-
-ملاحظات هامة جداً:
-- `search_query` يجب أن تكون باللغة الإنجليزية دائماً ومحددة وتصلح للبحث في مكتبات الفيديو مثل Pexels.
-- قسّم النص إلى 3 إلى 4 مشاهد على الأكثر.
-- تجنب تماماً المقدمات الطويلة مثل "أهلاً بكم في فيديو اليوم". ابدأ مباشرة بالمعلومة الصادمة.
+}}
 """
 
 MODELS_LIST = [
@@ -48,25 +51,19 @@ MODELS_LIST = [
     "gemini-3.8-flash"
 ]
 
-def generate_script(topic: str = None) -> dict:
-    """Generates an engaging shorts script with visual search queries using Gemini Flash."""
+def generate_innovative_script(custom_topic: str = None) -> dict:
+    """Generates a dynamic, highly creative viral script across diverse pillars."""
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY is missing! Please set it in your .env file.")
 
-    if not topic:
-        topic = random.choice(TOPIC_IDEAS)
+    pillar = custom_topic if custom_topic else random.choice(CONTENT_PILLARS)
+    prompt = CREATIVE_PROMPT.format(pillar=pillar)
 
     headers = {"Content-Type": "application/json"}
     payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": f"{SYSTEM_PROMPT}\n\nالموضوع المطلوب لهذا الفيديو: {topic}"}
-                ]
-            }
-        ],
+        "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
-            "temperature": 0.7,
+            "temperature": 0.85,
             "responseMimeType": "application/json"
         }
     }
@@ -75,38 +72,32 @@ def generate_script(topic: str = None) -> dict:
     for model in MODELS_LIST:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
         try:
-            response = requests.post(url, headers=headers, json=payload, timeout=60)
-            if response.status_code == 200:
-                result = response.json()
+            res = requests.post(url, headers=headers, json=payload, timeout=60)
+            if res.status_code == 200:
+                result = res.json()
                 candidates = result.get("candidates", [])
                 if not candidates:
-                    raise ValueError("No candidates returned from Gemini API")
-                
+                    continue
                 parts = candidates[0].get("content", {}).get("parts", [])
                 text_parts = [p.get("text", "") for p in parts if not p.get("thought", False)]
-                content_text = "".join(text_parts).strip()
-
-                if content_text.startswith("```"):
-                    content_text = re.sub(r"^```(?:json)?\s*", "", content_text)
-                    content_text = re.sub(r"\s*```$", "", content_text)
-
-                return json.loads(content_text)
+                content = "".join(text_parts).strip()
+                if content.startswith("```"):
+                    content = re.sub(r"^```(?:json)?\s*", "", content)
+                    content = re.sub(r"\s*```$", "", content)
+                return json.loads(content)
             else:
-                last_error = f"{model} returned {response.status_code}: {response.text}"
+                last_error = f"{model} returned {res.status_code}"
         except Exception as e:
-            last_error = f"{model} processing error: {e}"
+            last_error = str(e)
             continue
 
-    raise RuntimeError(f"All Gemini models failed. Last error: {last_error}")
+    raise RuntimeError(f"All models failed to generate script. Last error: {last_error}")
 
 if __name__ == "__main__":
-    print("Testing Brain script generator...")
-    try:
-        data = generate_script()
-        print(f"\nTitle: {data['title']}")
-        print(f"\nTopic: {data.get('topic')}")
-        print(f"\nScenes ({len(data['scenes'])}):")
-        for i, scene in enumerate(data['scenes'], 1):
-            print(f" {i}. [{scene['search_query']}] -> {scene['narration']}")
-    except Exception as e:
-        print(f"Error: {e}")
+    print("Testing Creative Brain...")
+    data = generate_innovative_script()
+    print(f"\nTitle: {data['title']}")
+    print(f"Topic: {data.get('topic')}")
+    print(f"\nScenes ({len(data['scenes'])}):")
+    for i, s in enumerate(data['scenes'], 1):
+        print(f" {i}. [{s['search_query']}] -> {s['narration']}")
