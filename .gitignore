@@ -1,5 +1,7 @@
 # Environment and keys
 .env
+client_secrets.json
+*token*.json
 
 # Output & temp media
 output/
