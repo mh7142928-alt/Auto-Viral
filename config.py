@@ -20,7 +20,7 @@ PEXELS_API_KEY = os.getenv("PEXELS_API_KEY", "")
 
 # Voice Settings
 DEFAULT_VOICE = os.getenv("VOICE_NAME", "ar-SA-HamedNeural")
-VOICE_RATE = os.getenv("VOICE_RATE", "+10%")
+VOICE_RATE = os.getenv("VOICE_RATE", "+0%")
 
 # Video Output Specs
 VIDEO_WIDTH = 1080

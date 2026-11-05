@@ -32,7 +32,7 @@ def search_and_download_video(query: str, output_path: str, min_duration: int = 
 
     if not videos:
         # Ultimate fallback
-        params["query"] = "cinematic mystery dark background"
+        params["query"] = "peaceful nature sunset landscape aerial"
         response = requests.get(PEXELS_SEARCH_URL, headers=headers, params=params, timeout=30)
         data = response.json()
         videos = data.get("videos", [])
